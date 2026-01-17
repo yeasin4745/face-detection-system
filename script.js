@@ -121,4 +121,4 @@ startBtn.addEventListener('click', startCamera);
 stopBtn.addEventListener('click', stopCamera);
 
 
-init()
+init();
