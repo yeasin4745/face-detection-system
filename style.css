@@ -68,7 +68,7 @@ body {
 }
 
 .badge-active {
-    background-color: rgba(34, 211, 238, 0.2);
+    background-color: rgba(34, 211, 238, 0.1);
     color: #22d3ee;
     border: 1px solid rgba(34, 211, 238, 0.3);
 }
