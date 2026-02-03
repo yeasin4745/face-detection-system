@@ -7,21 +7,28 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-slate-900 text-white min-h-screen font-sans">
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         <header class="text-center mb-10">
-            <h1 class="text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">
-                AI Face Detector
-            </h1>
+            <div class="flex justify-center items-center gap-4 mb-4">
+                <h1 id="main-title" class="text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">
+                    AI Face Detector
+                </h1>
+                <button id="help-btn" class="p-2 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors">
+                    <i data-lucide="help-circle" class="w-6 h-6 text-cyan-400"></i>
+                </button>
+            </div>
             <p class="text-slate-400 text-lg max-w-2xl mx-auto">
                 Real-time face detection and analysis. Experience advanced neural networks directly in your browser.
             </p>
         </header>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-8">
-                <div class="relative bg-slate-800 rounded-3xl overflow-hidden shadow-2xl border border-slate-700 group">
+                <div id="video-container" class="relative bg-slate-800 rounded-3xl overflow-hidden shadow-2xl border border-slate-700 group">
                     <div id="loading-overlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/90 transition-opacity duration-500">
                         <div class="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                         <p class="text-cyan-400 font-medium animate-pulse">Loading AI Models...</p>
@@ -32,7 +39,7 @@
                     </div>
                     <video id="webcam" class="w-full h-auto block" autoplay muted playsinline></video>
                     <canvas id="overlay" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
-                    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-4">
+                    <div id="controls" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-4">
                         <button id="start-btn" class="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
                             <i data-lucide="play" class="w-5 h-5"></i>
                             Start Detection
@@ -45,7 +52,7 @@
                 </div>
             </div>
             <div class="lg:col-span-4 space-y-6">
-                <div class="bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl">
+                <div id="stats-panel" class="bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-xl font-bold flex items-center gap-2">
                             <i data-lucide="activity" class="text-cyan-400"></i>
@@ -56,11 +63,11 @@
                         </span>
                     </div>
                     <div class="space-y-4">
-                        <div class="p-4 bg-slate-900/50 rounded-2xl border border-slate-700/50">
+                        <div id="count-card" class="p-4 bg-slate-900/50 rounded-2xl border border-slate-700/50">
                             <p class="text-slate-500 text-xs uppercase font-bold mb-1">Faces Detected</p>
                             <div id="detection-count" class="text-3xl font-mono font-bold text-cyan-400">0</div>
                         </div>
-                        <div class="p-4 bg-slate-900/50 rounded-2xl border border-slate-700/50">
+                        <div id="details-card" class="p-4 bg-slate-900/50 rounded-2xl border border-slate-700/50">
                             <p class="text-slate-500 text-xs uppercase font-bold mb-2">Detection Details</p>
                             <div id="detection-list" class="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                                 <p class="text-slate-600 italic text-sm">Waiting for detection...</p>
@@ -68,7 +75,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+                <div id="info-card" class="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
                     <i data-lucide="info" class="absolute -right-4 -bottom-4 w-32 h-32 text-white/10 rotate-12 transition-transform group-hover:scale-110"></i>
                     <h3 class="text-lg font-bold mb-3 relative z-10">Vercel Ready</h3>
                     <p class="text-sm text-blue-100 relative z-10">
