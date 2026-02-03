@@ -1,110 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Face & Object Detection</title>
+    <title>AI Face Detection Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body class="bg-slate-900 text-white min-h-screen font-sans">
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         <header class="text-center mb-10">
             <h1 class="text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">
-                AI Vision Pro
+                AI Face Detector
             </h1>
             <p class="text-slate-400 text-lg max-w-2xl mx-auto">
-                Experience real-time artificial intelligence. Our advanced neural network detects faces and objects instantly through your camera feed.
+                Real-time face detection and analysis. Experience advanced neural networks directly in your browser.
             </p>
         </header>
-        
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-8">
                 <div class="relative bg-slate-800 rounded-3xl overflow-hidden shadow-2xl border border-slate-700 group">
                     <div id="loading-overlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/90 transition-opacity duration-500">
                         <div class="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p class="text-cyan-400 font-medium animate-pulse">Initializing AI Models...</p>
+                        <p class="text-cyan-400 font-medium animate-pulse">Loading AI Models...</p>
                     </div>
-                    
                     <div id="camera-placeholder" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-800">
                         <i data-lucide="camera-off" class="w-20 h-20 text-slate-600 mb-4"></i>
                         <p class="text-slate-500">Camera is currently inactive</p>
                     </div>
-                    
                     <video id="webcam" class="w-full h-auto block" autoplay muted playsinline></video>
                     <canvas id="overlay" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
-                    
                     <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-4">
                         <button id="start-btn" class="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
                             <i data-lucide="play" class="w-5 h-5"></i>
-                            Start Vision
+                            Start Detection
                         </button>
                         <button id="stop-btn" class="hidden flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white px-8 py-3 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg">
                             <i data-lucide="square" class="w-5 h-5"></i>
-                            Stop Vision
+                            Stop Detection
                         </button>
                     </div>
                 </div>
             </div>
-            
             <div class="lg:col-span-4 space-y-6">
                 <div class="bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-xl font-bold flex items-center gap-2">
                             <i data-lucide="activity" class="text-cyan-400"></i>
-                            Live Analytics
+                            Live Stats
                         </h2>
                         <span id="status-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-700 text-slate-400 uppercase tracking-wider">
                             Offline
                         </span>
                     </div>
-                    
                     <div class="space-y-4">
                         <div class="p-4 bg-slate-900/50 rounded-2xl border border-slate-700/50">
-                            <p class="text-slate-500 text-xs uppercase font-bold mb-1">Detections</p>
+                            <p class="text-slate-500 text-xs uppercase font-bold mb-1">Faces Detected</p>
                             <div id="detection-count" class="text-3xl font-mono font-bold text-cyan-400">0</div>
                         </div>
-                        
                         <div class="p-4 bg-slate-900/50 rounded-2xl border border-slate-700/50">
-                            <p class="text-slate-500 text-xs uppercase font-bold mb-2">Identified Objects</p>
+                            <p class="text-slate-500 text-xs uppercase font-bold mb-2">Detection Details</p>
                             <div id="detection-list" class="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                                <p class="text-slate-600 italic text-sm">Waiting for data...</p>
+                                <p class="text-slate-600 italic text-sm">Waiting for detection...</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                
                 <div class="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
                     <i data-lucide="info" class="absolute -right-4 -bottom-4 w-32 h-32 text-white/10 rotate-12 transition-transform group-hover:scale-110"></i>
-                    <h3 class="text-lg font-bold mb-3 relative z-10">System Info</h3>
-                    <ul class="text-sm text-blue-100 space-y-2 relative z-10">
-                        <li class="flex items-center gap-2">
-                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                            TensorFlow.js Engine
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                            COCO-SSD Neural Net
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                            GPU Acceleration Active
-                        </li>
-                    </ul>
+                    <h3 class="text-lg font-bold mb-3 relative z-10">Vercel Ready</h3>
+                    <p class="text-sm text-blue-100 relative z-10">
+                        This application is optimized for Vercel deployment. No server-side code required.
+                    </p>
                 </div>
             </div>
         </div>
-        
         <footer class="mt-16 text-center text-slate-500 text-sm border-t border-slate-800 pt-8">
-            <p>&copy; 2026 AI Vision Pro. Built with Vanilla JavaScript & TensorFlow.js</p>
+            <p>&copy; 2026 Face Detector Pro. Powered by face-api.js</p>
         </footer>
     </div>
     <script src="script.js"></script>
 </body>
-
 </html>

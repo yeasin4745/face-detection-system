@@ -1,6 +1,5 @@
 const video = document.getElementById('webcam');
 const canvas = document.getElementById('overlay');
-const ctx = canvas.getContext('2d');
 const startBtn = document.getElementById('start-btn');
 const stopBtn = document.getElementById('stop-btn');
 const loadingOverlay = document.getElementById('loading-overlay');
@@ -9,7 +8,6 @@ const statusBadge = document.getElementById('status-badge');
 const detectionCount = document.getElementById('detection-count');
 const detectionList = document.getElementById('detection-list');
 
-let model = null;
 let stream = null;
 let animationId = null;
 
@@ -17,11 +15,17 @@ lucide.createIcons();
 
 async function init() {
     try {
-        model = await cocoSsd.load();
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+            faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+        ]);
         loadingOverlay.classList.add('hidden');
     } catch (error) {
         console.error(error);
-        alert('Failed to load AI model.');
+        alert('Failed to load AI models.');
     }
 }
 
@@ -66,59 +70,59 @@ function stopCamera() {
     statusBadge.textContent = 'Offline';
     statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-slate-700 text-slate-400 uppercase tracking-wider';
     detectionCount.textContent = '0';
-    detectionList.innerHTML = '<p class="text-slate-600 italic text-sm">Waiting for data...</p>';
+    detectionList.innerHTML = '<p class="text-slate-600 italic text-sm">Waiting for detection...</p>';
+    const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 async function detect() {
-    if (!model || video.paused || video.ended) return;
+    if (video.paused || video.ended) return;
 
-    const predictions = await model.detect(video);
+    const displaySize = { width: video.videoWidth, height: video.videoHeight };
+    faceapi.matchDimensions(canvas, displaySize);
+
+    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceExpressions();
+
+    const resizedDetections = faceapi.resizeResults(detections, displaySize);
     
-    renderPredictions(predictions);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    faceapi.draw.drawDetections(canvas, resizedDetections);
+    faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+    faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+
+    updateStats(detections);
     
     animationId = requestAnimationFrame(detect);
 }
 
-function renderPredictions(predictions) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function updateStats(detections) {
+    detectionCount.textContent = detections.length;
     
-    detectionCount.textContent = predictions.length;
-    
-    if (predictions.length > 0) {
+    if (detections.length > 0) {
         detectionList.innerHTML = '';
-        
-        predictions.forEach(prediction => {
-            const [x, y, width, height] = prediction.bbox;
-            const score = Math.round(prediction.score * 100);
-            
-            ctx.strokeStyle = '#22d3ee';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(x, y, width, height);
-            
-            ctx.fillStyle = '#22d3ee';
-            const textWidth = ctx.measureText(`${prediction.class} ${score}%`).width;
-            ctx.fillRect(x, y - 30, textWidth + 20, 30);
-            
-            ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 16px Inter';
-            ctx.fillText(`${prediction.class} ${score}%`, x + 10, y - 10);
+        detections.forEach((det, i) => {
+            const expressions = det.expressions;
+            const topExpression = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+            const confidence = Math.round(expressions[topExpression] * 100);
             
             const item = document.createElement('div');
             item.className = 'detection-item flex justify-between items-center p-3 bg-slate-700/30 rounded-xl border border-slate-600/50';
             item.innerHTML = `
-                <span class="capitalize font-medium">${prediction.class}</span>
-                <span class="text-cyan-400 font-mono text-sm">${score}%</span>
+                <span class="capitalize font-medium">Face ${i + 1}: ${topExpression}</span>
+                <span class="text-cyan-400 font-mono text-sm">${confidence}%</span>
             `;
             detectionList.appendChild(item);
         });
     } else {
-        detectionList.innerHTML = '<p class="text-slate-600 italic text-sm">No objects detected</p>';
+        detectionList.innerHTML = '<p class="text-slate-600 italic text-sm">No faces detected</p>';
     }
 }
 
 startBtn.addEventListener('click', startCamera);
 stopBtn.addEventListener('click', stopCamera);
-
 
 init();
