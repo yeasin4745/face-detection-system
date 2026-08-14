@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Vision Pro | Face Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-900 text-white min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-6 md:py-10 max-w-6xl">
+        <header class="text-center mb-8 md:mb-12">
+            <div class="flex justify-center items-center gap-3 md:gap-4 mb-4">
+                <h1 id="main-title" class="text-3xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">
+                    AI Vision Pro
+                </h1>
+                <button id="help-btn" class="p-2 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors">
+                    <i data-lucide="help-circle" class="w-5 h-5 md:w-6 md:h-6 text-cyan-400"></i>
+                </button>
+            </div>
+            <p class="text-slate-400 text-sm md:text-lg max-w-2xl mx-auto px-4">
+                Advanced AI-powered face detection, age/gender estimation, and expression analysis.
+            </p>
+        </header>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+            <div class="lg:col-span-8">
+                <div id="video-container" class="relative bg-slate-800 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl border border-slate-700 group aspect-video">
+                    <div id="loading-overlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/90 transition-opacity duration-500">
+                        <div class="w-12 h-12 md:w-16 md:h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p class="text-cyan-400 font-medium animate-pulse text-sm md:text-base">Loading AI Models...</p>
+                    </div>
+                    <div id="camera-placeholder" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-800">
+                        <i data-lucide="camera-off" class="w-16 h-16 md:w-20 md:h-20 text-slate-600 mb-4"></i>
+                        <p class="text-slate-500 text-sm md:text-base">Camera is currently inactive</p>
+                    </div>
+                    <video id="webcam" class="w-full h-full object-cover" autoplay muted playsinline></video>
+                    <canvas id="overlay" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                    <div id="controls" class="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-3 md:gap-4 w-full justify-center px-4">
+                        <button id="start-btn" class="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-6 md:px-8 py-2 md:py-3 rounded-full font-bold text-sm md:text-base transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i data-lucide="play" class="w-4 h-4 md:w-5 md:h-5"></i>
+                            Start Detection
+                        </button>
+                        <button id="stop-btn" class="hidden flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white px-6 md:px-8 py-2 md:py-3 rounded-full font-bold text-sm md:text-base transition-all transform hover:scale-105 shadow-lg">
+                            <i data-lucide="square" class="w-4 h-4 md:w-5 md:h-5"></i>
+                            Stop Detection
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="lg:col-span-4 space-y-6">
+                <div id="stats-panel" class="bg-slate-800 rounded-2xl md:rounded-3xl p-5 md:p-6 border border-slate-700 shadow-xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg md:text-xl font-bold flex items-center gap-2">
+                            <i data-lucide="activity" class="text-cyan-400"></i>
+                            Live Analytics
+                        </h2>
+                        <span id="status-badge" class="px-3 py-1 rounded-full text-[10px] md:text-xs font-bold bg-slate-700 text-slate-400 uppercase tracking-wider">
+                            Offline
+                        </span>
+                    </div>
+                    <div class="space-y-4">
+                        <div id="count-card" class="p-4 bg-slate-900/50 rounded-xl md:rounded-2xl border border-slate-700/50">
+                            <p class="text-slate-500 text-[10px] md:text-xs uppercase font-bold mb-1">Faces Detected</p>
+                            <div id="detection-count" class="text-2xl md:text-3xl font-mono font-bold text-cyan-400">0</div>
+                        </div>
+                        <div id="details-card" class="p-4 bg-slate-900/50 rounded-xl md:rounded-2xl border border-slate-700/50">
+                            <p class="text-slate-500 text-[10px] md:text-xs uppercase font-bold mb-2">Analysis Results</p>
+                            <div id="detection-list" class="space-y-3 max-h-[250px] md:max-h-[300px] overflow-y-auto custom-scrollbar">
+                                <p class="text-slate-600 italic text-xs md:text-sm">Waiting for detection...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="info-card" class="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-xl relative overflow-hidden group">
+                    <i data-lucide="info" class="absolute -right-4 -bottom-4 w-24 h-24 md:w-32 md:h-32 text-white/10 rotate-12 transition-transform group-hover:scale-110"></i>
+                    <h3 class="text-base md:text-lg font-bold mb-2 md:mb-3 relative z-10">Enhanced AI</h3>
+                    <p class="text-xs md:text-sm text-blue-100 relative z-10 leading-relaxed">
+                        Now features 68 face landmarks, age/gender estimation, and multiple face tracking. Fully responsive for all devices.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <footer class="mt-12 md:mt-16 text-center text-slate-500 text-[10px] md:text-sm border-t border-slate-800 pt-6 md:pt-8">
+            <p>&copy; 2026 AI Vision Pro. Powered by face-api.js</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
